@@ -41,7 +41,7 @@ export default function Home() {
       setSessionId(data.sessionId)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate problem'
-      setError(errorMessage)
+      setError('Server currently overloaded, Please try again')
       console.error('Error:', err)
     } finally {
       setIsLoading(false)
