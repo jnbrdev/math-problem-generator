@@ -1,0 +1,5 @@
+{
+  "/not-found": "app/not-found.js",
+  "/page": "app/page.js",
+  "/api/math-problem/route": "app/api/math-problem/route.js"
+}

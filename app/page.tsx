@@ -14,47 +14,141 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
+  const [error, setError] = useState('')
 
   const generateProblem = async () => {
-    // TODO: Implement problem generation logic
-    // This should call your API route to generate a new problem
-    // and save it to the database
+    setIsLoading(true)
+    setError('')
+    setProblem(null)
+    setUserAnswer('')
+    setFeedback('')
+    setIsCorrect(null)
+
+    try {
+      const response = await fetch('/api/math-problem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate' }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to generate problem')
+      }
+
+      const data = await response.json()
+      setProblem(data.problem)
+      setSessionId(data.sessionId)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate problem'
+      setError(errorMessage)
+      console.error('Error:', err)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const submitAnswer = async (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: Implement answer submission logic
-    // This should call your API route to check the answer,
-    // save the submission, and generate feedback
+  const submitAnswer = async () => {
+    if (!sessionId || !userAnswer) {
+      setError('Please enter an answer')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const userNum = parseFloat(userAnswer)
+      
+      if (isNaN(userNum)) {
+        setError('Please enter a valid number')
+        setIsLoading(false)
+        return
+      }
+
+      const response = await fetch('/api/math-problem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit',
+          sessionId,
+          userAnswer: userNum,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to submit answer')
+      }
+
+      const data = await response.json()
+      setFeedback(data.feedback)
+      setIsCorrect(data.isCorrect)
+      
+      if (data.isCorrect) {
+        setUserAnswer('')
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to submit answer'
+      setError(errorMessage)
+      console.error('Error:', err)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
-          Math Problem Generator
-        </h1>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #E5E9C5 0%, #9ECFD4 50%, #70B2B2 100%)', padding: '2rem 1rem' }}>
+      <div style={{ maxWidth: '42rem', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#016B61' }}>
+            Math Problem Generator
+          </h1>
+          <p style={{ fontSize: '1.125rem', color: '#016B61' }}>
+            Generate and solve math problems
+          </p>
+        </div>
         
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div style={{ borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', padding: '1.5rem', marginBottom: '1.5rem', backgroundColor: '#E5E9C5' }}>
           <button
             onClick={generateProblem}
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105"
+            style={{ 
+              width: '100%',
+              fontWeight: 'bold',
+              padding: '0.75rem 1rem',
+              borderRadius: '0.5rem',
+              border: 'none',
+              backgroundColor: isLoading ? '#70B2B2' : '#016B61',
+              color: 'white',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s ease-in-out',
+              opacity: isLoading ? 0.7 : 1,
+            }}
+            onMouseEnter={(e) => !isLoading && (e.currentTarget.style.transform = 'scale(1.05)')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
             {isLoading ? 'Generating...' : 'Generate New Problem'}
           </button>
         </div>
 
+        {error && (
+          <div style={{ borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', padding: '1.5rem', marginBottom: '1.5rem', backgroundColor: '#E5E9C5', border: '2px solid #016B61' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#016B61' }}>❌ Error</h2>
+            <p style={{ color: '#016B61' }}>{error}</p>
+          </div>
+        )}
+
         {problem && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4 text-gray-700">Problem:</h2>
-            <p className="text-lg text-gray-800 leading-relaxed mb-6">
+          <div style={{ borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', padding: '1.5rem', marginBottom: '1.5rem', backgroundColor: '#E5E9C5' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: '#016B61' }}>Problem:</h2>
+            <p style={{ fontSize: '1.125rem', lineHeight: '1.5', marginBottom: '1.5rem', padding: '1rem', borderRadius: '0.5rem', backgroundColor: '#9ECFD4', color: '#016B61' }}>
               {problem.problem_text}
             </p>
             
-            <form onSubmit={submitAnswer} className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label htmlFor="answer" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="answer" style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem', color: '#016B61' }}>
                   Your Answer:
                 </label>
                 <input
@@ -62,32 +156,73 @@ export default function Home() {
                   id="answer"
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  style={{ 
+                    width: '100%',
+                    padding: '0.5rem 1rem',
+                    border: '2px solid #70B2B2',
+                    borderRadius: '0.5rem',
+                    backgroundColor: '#ffffff',
+                    fontSize: '1rem',
+                  }}
                   placeholder="Enter your answer"
+                  disabled={isLoading}
                   required
                 />
               </div>
               
               <button
-                type="submit"
+                onClick={submitAnswer}
                 disabled={!userAnswer || isLoading}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105"
+                style={{ 
+                  width: '100%',
+                  fontWeight: 'bold',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  backgroundColor: !userAnswer || isLoading ? '#70B2B2' : '#016B61',
+                  color: 'white',
+                  cursor: !userAnswer || isLoading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease-in-out',
+                  opacity: !userAnswer || isLoading ? 0.7 : 1,
+                  fontSize: '1rem',
+                }}
+                onMouseEnter={(e) => (!userAnswer || isLoading) ? null : (e.currentTarget.style.transform = 'scale(1.05)')}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               >
-                Submit Answer
+                {isLoading ? 'Checking...' : 'Submit Answer'}
               </button>
-            </form>
+            </div>
           </div>
         )}
 
         {feedback && (
-          <div className={`rounded-lg shadow-lg p-6 ${isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-yellow-50 border-2 border-yellow-200'}`}>
-            <h2 className="text-xl font-semibold mb-4 text-gray-700">
+          <div style={{ borderRadius: '0.75rem', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', padding: '1.5rem', backgroundColor: '#E5E9C5', border: '2px solid #016B61' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: '#016B61' }}>
               {isCorrect ? '✅ Correct!' : '❌ Not quite right'}
             </h2>
-            <p className="text-gray-800 leading-relaxed">{feedback}</p>
+            <p style={{ lineHeight: '1.5', marginBottom: '1rem', color: '#016B61' }}>{feedback}</p>
+            <button
+              onClick={generateProblem}
+              style={{ 
+                width: '100%',
+                fontWeight: 'bold',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                backgroundColor: '#016B61',
+                color: 'white',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-in-out',
+                fontSize: '1rem',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+              onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            >
+              Try Another Problem
+            </button>
           </div>
         )}
-      </main>
+      </div>
     </div>
   )
 }

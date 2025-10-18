@@ -12,6 +12,10 @@ This is a starter kit for building an AI-powered math problem generator applicat
 - **Database**: Supabase
 - **AI Integration**: Google Generative AI (Gemini)
 
+## Supabase Project URL and Anon Key
+- Supabase Project URL = **https://zckbnyoejywxybbmvmni.supabase.co**
+- Anon Key = **eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpja2JueW9lanl3eHliYm12bW5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NTM3NDksImV4cCI6MjA3NjMyOTc0OX0.tbLouz17_zsqgJVlEpAW1xz4oSDY4qD9uZct4Z9HoUY**
+
 ## Setup Instructions
 
 ### 1. Clone the Repository
